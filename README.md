@@ -22,7 +22,7 @@ Helper tools for use with Minecraft.
 
 ## Notices
 
-- Minecraft is a trademark of MOJANG SYNERGIES AB. Nothing in this repository is related to Minecraft or affiliated with Mojang in any way. This is simply a collection of scripts / tools useful when playing the game.
+- Minecraft is a trademark of Mojang. Nothing in this repository is related to Minecraft or affiliated with Mojang in any way. This is simply a collection of scripts / tools useful when playing the game.
 
 - Note that it may be against the rules to use these scripts on some servers. It is the responsibility of the user to ensure that the use of these script / tools does not violate any rules or regulations.
 
