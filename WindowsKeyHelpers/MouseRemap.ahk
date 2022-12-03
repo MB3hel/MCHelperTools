@@ -1,7 +1,2 @@
-xbutton1::
-    Click WheelDown
-    return
-
-xbutton2::
-    Click WheelUp
-    return
+xbutton1::F13
+xbutton2::F14
