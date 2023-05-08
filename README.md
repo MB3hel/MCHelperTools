@@ -27,6 +27,8 @@ Helper tools for use with Minecraft.
 sudo usermod -G input -a "${USERNAME}"
 ```
 
+*Note that these scripts require python3 along with the python libinput and evdev libraries.*
+
 - **ToggleSprintBedrock.py**: This is a Linux version of the toggle sprint helper script. Works on X11 and Wayland sessions. *Be aware that [this bug](https://gitlab.gnome.org/GNOME/mutter/-/issues/398) will result in this causing freezes on Gnome X11 sessions. Wayland and other desktops are not impacted.*
 
 
