@@ -10,15 +10,23 @@ Helper tools for use with Minecraft.
 - **ToggleSprintBedrock**: This script is used to replicate Minecraft Java Edition 1.15+'s toggle sprint behavior in Minecraft Bedrock Edition (Win 10 edition) or in older versions of Java Edition. This script will use the `F9` key as the sprint key. Pressing left `Ctrl` will toggle whether the `F9` key is "held". This replicates the behavior of toggle sprint, once the sprint key is mapped to `F9` in game.   
     - This script also has some "extra" features to help with bedrock (none of the features described here matter in Java edition). In bedrock edition, the sprint key must be quickly released then held again after some actions (exiting a gui, sneaking, sleeping, respawning, etc). Some of these are easily detected. When left `Shift` is released, `E` is pressed, or `Esc` is pressed the sprint key will be released and then re-held quickly. This should never be noticeable to the player. Sleeping and respawning are not easily detected, therefore it is up to the player to reactivate sprint after these actions (easiest way is tapping left shift).
 
-- **MouseRemap**: Remaps side buttons on cheap mice to scroll. Useful for switching between hotbar items with a mouse having only two side buttons.
+- **MouseRemap**: Remaps side buttons on cheap mice to F13 and F14. This allows them to be used in game instead of as back and forward.
 
-- **DisableWinKey**: Disables the Ctrl+Esc key combo. Prevents accidental exiting of some games.
+- **DisableCtrlEsc**: Disables the Ctrl+Esc key combo. Prevents accidental exiting of some games.
 
-- **DisableCtrlEsc**: Disables the windows (super) key. Prevents accidental exiting of some games.
+- **DisableWinKey**: Disables the windows (super) key. Prevents accidental exiting of some games.
+
 
 ## LinuxKeyHelpers
 
-- **bedrock_toggle_sprint**: This is a Linux version of the toggle sprint helper script that works on Linux. It requires that python3 libraries `evdev` and `xlib` are installed. Often these should be installed using the distribution package manager. As of now, this script does not have some of the extra features the windows script does (the features aimed at fixing issues in bedrock version of the game).
+*Run the following commands before using any of these tools. Then reboot. Alternatively, run the scripts as root.*
+
+```sh
+sudo usermod -G input -a "${USERNAME}"
+```
+
+- **bedrock_toggle_sprint**: This is a Linux version of the toggle sprint helper script.
+
 
 ## Notices
 
