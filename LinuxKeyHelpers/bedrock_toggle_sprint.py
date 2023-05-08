@@ -46,12 +46,12 @@
 ################################################################################
 
 import libinput
+import libinput.evcodes as lie
 import sys
 import time
-from evdev import uinput
+import threading
 from evdev import uinput, ecodes as e
-import libinput.evcodes as lie
-
+from queue import Queue
 
 # Libinput to get keyboard events
 li = libinput.LibInput(udev=True)
@@ -59,6 +59,10 @@ li.udev_assign_seat('seat0')
 
 # Uinput device to inject keyboard events
 ui = uinput.UInput()
+
+# Queue libinput events and handle on different thread
+# Prevents uinput injection from stalling libinput itself
+evqueue = Queue()
 
 
 # Track sprint key state
@@ -79,6 +83,7 @@ def toggle_sprint():
         # Release F9
         ui.write(e.EV_KEY, e.KEY_F9, 0)
         ui.syn()
+        print("RELEASE", flush=True)
     else:
         # Release F9
         # Ensures subsequent press is properly detected
@@ -91,6 +96,8 @@ def toggle_sprint():
         # Press F9
         ui.write(e.EV_KEY, e.KEY_F9, 1)
         ui.syn()
+
+        print("PRESS", flush=True)
 
 
 def quick_release():
@@ -108,6 +115,8 @@ def quick_release():
         # Press F9
         ui.write(e.EV_KEY, e.KEY_F9, 1)
         ui.syn()
+
+        print("QUICK_RELEASE", flush=True)
 
 
 def handle_event(kcode, kstate):
@@ -139,7 +148,17 @@ def handle_event(kcode, kstate):
             quick_release()
 
 
-def main() -> int:
+def event_task():
+    global evqueue
+    try:
+        while True:
+            kcode, kstate = evqueue.get()
+            handle_event(kcode, kstate)
+    except KeyboardInterrupt:
+        sys.exit(0)
+
+def main():
+    global li, evqueue
     try:
         while True:
             try:
@@ -148,16 +167,16 @@ def main() -> int:
                         kbev = event.get_keyboard_event()
                         kcode = kbev.get_key()
                         kstate = kbev.get_key_state()
-                        handle_event(kcode, kstate)
+                        evqueue.put((kcode, kstate))
             except ValueError:
                 # Unknown / unhandled event
                 # Scroll wheel seems to cause this
                 pass
     except KeyboardInterrupt:
-        pass
-    
-    return 0
+        sys.exit(0)
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    event_thread = threading.Thread(target=event_task, daemon=True)
+    event_thread.start()
+    main()
