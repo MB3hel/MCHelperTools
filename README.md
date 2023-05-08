@@ -1,6 +1,7 @@
 # MCHelperTools
 Helper tools for use with Minecraft.
 
+
 ## WindowsKeyHelpers
 
 *Most of the windows tools were built with [AutoHotKey](https://www.autohotkey.com/). Binaries created using AutoHotKey are available to download on the [releases](https://github.com/MB3hel/MCHelperTools/releases) page. These binaries are unsigned, so you may get a warning from windows smart screen.*
@@ -17,6 +18,7 @@ Helper tools for use with Minecraft.
 - **DisableWinKey**: Disables the windows (super) key. Prevents accidental exiting of some games.
 
 
+
 ## LinuxKeyHelpers
 
 *Run the following commands before using any of these tools. Then reboot. Alternatively, run the scripts as root.*
@@ -25,7 +27,8 @@ Helper tools for use with Minecraft.
 sudo usermod -G input -a "${USERNAME}"
 ```
 
-- **bedrock_toggle_sprint**: This is a Linux version of the toggle sprint helper script.
+- **ToggleSprintBedrock.py**: This is a Linux version of the toggle sprint helper script. Works on X11 and Wayland sessions. *Be aware that [this bug](https://gitlab.gnome.org/GNOME/mutter/-/issues/398) will result in this causing freezes on Gnome X11 sessions. Wayland and other desktops are not impacted.*
+
 
 
 ## Notices
@@ -33,6 +36,8 @@ sudo usermod -G input -a "${USERNAME}"
 - Minecraft is a trademark of Mojang. Nothing in this repository is related to Minecraft or affiliated with Mojang in any way. This is simply a collection of scripts / tools useful when playing the game.
 
 - Note that it may be against the rules to use these scripts on some servers. It is the responsibility of the user to ensure that the use of these script / tools does not violate any rules or regulations.
+
+
 
 ## License (MIT License)
 

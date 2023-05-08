@@ -83,7 +83,7 @@ def toggle_sprint():
         # Release F9
         ui.write(e.EV_KEY, e.KEY_F9, 0)
         ui.syn()
-        print("RELEASE", flush=True)
+        # print("RELEASE", flush=True)
     else:
         # Release F9
         # Ensures subsequent press is properly detected
@@ -97,7 +97,7 @@ def toggle_sprint():
         ui.write(e.EV_KEY, e.KEY_F9, 1)
         ui.syn()
 
-        print("PRESS", flush=True)
+        # print("PRESS", flush=True)
 
 
 def quick_release():
@@ -116,7 +116,7 @@ def quick_release():
         ui.write(e.EV_KEY, e.KEY_F9, 1)
         ui.syn()
 
-        print("QUICK_RELEASE", flush=True)
+        # print("QUICK_RELEASE", flush=True)
 
 
 def handle_event(kcode, kstate):
