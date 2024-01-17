@@ -99,8 +99,6 @@ udev.udev_unref.restype = ctypes.c_void_p
 # libmacro implementation
 ################################################################################
 
-ui = None
-
 class EventType(IntEnum):
     KeyPress = 0                    # Value is keycode
     KeyRelease = 1                  # Value is keycode
@@ -110,9 +108,6 @@ class EventType(IntEnum):
     MouseScrollHorizontal = 5       # Value is degrees (positive is down, negative is up)
 
 def libmacro_run(callback: Callable[[EventType, Any], Any]):
-    global ui
-
-
     # Initialize udev and libinput to monitor input events
     m_udev = udev.udev_new()
     libinput_iface  = libinput_interface(CFUNC_OPEN_RESTRICTED(libinput_open_restricted), CFUNC_CLOSE_RESTRICTED(libinput_close_restricted))
@@ -123,7 +118,7 @@ def libmacro_run(callback: Callable[[EventType, Any], Any]):
         return
     
     # Uinput device to inject keyboard events
-    ui = uinput.UInput(name="libmacro-uinput")
+    ui = uinput.UInput({ ecodes.EV_KEY : [ecodes.KEY_F9] }, name="libmacro-uinput")
 
     # Event loop
     try:
@@ -176,18 +171,18 @@ def libmacro_run(callback: Callable[[EventType, Any], Any]):
     udev.udev_unref(m_udev)
 
 
-def libmacro_press_key(keycode):
-    if ui is None:
-        print("Run libmacro first!!!")
-        return
-    ui.write(ecodes.EV_KEY, keycode, 1)
-    ui.syn()
+def libmacro_create_input_device(keys = None):
+    events = {}
+    if keys is not None:
+        events[ecodes.EV_KEY] = keys
+    return uinput.UInput(events, name="libmacro-uinput")
 
-def libmacro_release_key(keycode):
-    if ui is None:
-        print("Run libmacro first!!!")
-        return
-    ui.write(ecodes.EV_KEY, keycode, 1)
-    ui.syn()
+def libmacro_press_key(device, key):
+    device.write(ecodes.EV_KEY, key, 1)
+    device.syn()
+
+def libmacro_release_key(device, key):
+    device.write(ecodes.EV_KEY, key, 0)
+    device.syn()
 
 ################################################################################

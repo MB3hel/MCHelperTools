@@ -1,8 +1,10 @@
 
-from libmacro import libmacro_run, libmacro_press_key, libmacro_release_key, EventType
+from libmacro import libmacro_run, libmacro_create_input_device, libmacro_press_key, libmacro_release_key, EventType
 from evdev import ecodes
 import time
 
+
+dev = libmacro_create_input_device([ecodes.KEY_F9])
 
 sprint_state = False
 
@@ -16,18 +18,18 @@ def toggle_sprint():
     # Apply state
     if not sprint_state:
         # Release F9
-        libmacro_release_key(ecodes.KEY_F9)
+        libmacro_release_key(dev, ecodes.KEY_F9)
         print("RELEASE", flush=True)
     else:
         # Release F9
         # Ensures subsequent press is properly detected
         # Not an issue with java edition, but necessary for bedrock
         # using MCPELauncher
-        libmacro_release_key(ecodes.KEY_F9)
+        libmacro_release_key(dev, ecodes.KEY_F9)
         time.sleep(0.01)
         
         # Press F9
-        libmacro_press_key(ecodes.KEY_F9)
+        libmacro_press_key(dev, ecodes.KEY_F9)
 
         print("PRESS", flush=True)
 
@@ -36,12 +38,12 @@ def quick_release():
     global ui, sprint_state
     if sprint_state:
         # Release F9
-        libmacro_release_key(ecodes.KEY_F9)
+        libmacro_release_key(dev, ecodes.KEY_F9)
 
         time.sleep(0.05)
 
         # Press F9
-        libmacro_press_key(ecodes.KEY_F9)
+        libmacro_press_key(dev, ecodes.KEY_F9)
 
         print("QUICK_RELEASE", flush=True)
 
