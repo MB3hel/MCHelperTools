@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,-soname,libmacro.so -o libmacro.so CMakeFiles/macro.dir/src/libmacro.c.o  /usr/lib/x86_64-linux-gnu/libinput.so /usr/lib/x86_64-linux-gnu/libudev.so 

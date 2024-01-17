@@ -31,6 +31,7 @@ sudo usermod -G input -a "${USERNAME}"
 
 - **ToggleSprintBedrock.py**: This is a Linux version of the toggle sprint helper script. Works on X11 and Wayland sessions. *Be aware that [this bug](https://gitlab.gnome.org/GNOME/mutter/-/issues/398) will result in this causing freezes on Gnome X11 sessions. Wayland and other desktops are not impacted.*
 
+- **FixGnomeScrollXwayland.py**: This is a workaround for a bug with GNOME. After suspend (and maybe at other times too?), xwayland apps (including minecraft) will miss the first scroll event after changing direction with the scroll wheel. [GNOME Bug Report](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/5896)
 
 
 ## Notices

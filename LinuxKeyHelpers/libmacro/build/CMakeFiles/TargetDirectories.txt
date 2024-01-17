@@ -1,0 +1,3 @@
+/home/marcus/Projects/MCHelperTools/LinuxKeyHelpers/libmacro/build/CMakeFiles/macro.dir
+/home/marcus/Projects/MCHelperTools/LinuxKeyHelpers/libmacro/build/CMakeFiles/edit_cache.dir
+/home/marcus/Projects/MCHelperTools/LinuxKeyHelpers/libmacro/build/CMakeFiles/rebuild_cache.dir
