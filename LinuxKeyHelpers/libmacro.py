@@ -5,9 +5,13 @@
 import ctypes
 import os
 import traceback
-from typing import Callable, Any
+import importlib
+from abc import ABC, abstractmethod
+from typing import Callable, Any, List
 from enum import IntEnum
 from evdev import uinput, ecodes
+import select
+
 
 ################################################################################
 # libinput support
@@ -75,6 +79,9 @@ libinput.libinput_event_keyboard_get_key_state.restype = ctypes.c_int
 libinput.libinput_event_destroy.argtypes = [ctypes.c_void_p]
 libinput.libinput_event_destroy.restype = None
 
+libinput.libinput_get_fd.argtypes = [ctypes.c_void_p]
+libinput.libinput_get_fd.restype = ctypes.c_int
+
 ################################################################################
 
 
@@ -99,90 +106,126 @@ udev.udev_unref.restype = ctypes.c_void_p
 # libmacro implementation
 ################################################################################
 
-class EventType(IntEnum):
-    KeyPress = 0                    # Value is keycode
-    KeyRelease = 1                  # Value is keycode
-    MousePress = 2                  # Value is keycode
-    MouseRelease = 3                # Value is keycode
-    MouseScrollVertical = 4         # Value is degrees (positive is down, negative is up)
-    MouseScrollHorizontal = 5       # Value is degrees (positive is down, negative is up)
+class LibMacroScript(ABC):
 
-def libmacro_run(callback: Callable[[EventType, Any], Any]):
-    # Initialize udev and libinput to monitor input events
-    m_udev = udev.udev_new()
-    libinput_iface  = libinput_interface(CFUNC_OPEN_RESTRICTED(libinput_open_restricted), CFUNC_CLOSE_RESTRICTED(libinput_close_restricted))
-    m_libinput = libinput.libinput_udev_create_context(ctypes.byref(libinput_iface), None, m_udev)
-    rc = libinput.libinput_udev_assign_seat(m_libinput, "seat0".encode())
-    if rc != 0:
-        print("ERROR: Unable to initialize udev & libinput!")
-        return
-    
-    # Uinput device to inject keyboard events
-    ui = uinput.UInput({ ecodes.EV_KEY : [ecodes.KEY_F9] }, name="libmacro-uinput")
+    def __init__(self):
+        self.lm = None
 
-    # Event loop
-    try:
-        while True:
-            libinput.libinput_dispatch(m_libinput)
-            ev = libinput.libinput_get_event(m_libinput)
-            if ev is None:
-                continue
-            evtype = libinput.libinput_event_get_type(ev)
-            if evtype == 402:                   # LIBINPUT_EVENT_POINTER_BUTTON
-                # Mouse buttons
-                pev = libinput.libinput_event_get_pointer_event(ev)
-                button = libinput.libinput_event_pointer_get_button(pev)
-                if libinput.libinput_event_pointer_get_button_state(pev):
-                    # Button pressed
-                    callback(EventType.MousePress, button)
-                else:
-                    # Button released
-                    callback(EventType.MouseRelease, button)
-            elif evtype == 404:                 # LIBINPUT_EVENT_POINTER_SCROLL_WHEEL
-                pev = libinput.libinput_event_get_pointer_event(ev)
-                if libinput.libinput_event_pointer_has_axis(pev, 0):
-                    # Vertical scroll wheel
-                    value = libinput.libinput_event_pointer_get_scroll_value(pev, 0)
-                    callback(EventType.MouseScrollVertical, value)
-                elif libinput.libinput_event_pointer_has_axis(pev, 1):
-                    # Horizontal scroll wheel
-                    value = libinput.libinput_event_pointer_get_scroll_value(pev, 1)
-                    callback(EventType.MouseScrollHorizontal, value)
-            elif evtype == 300:                 # LIBINPUT_EVENT_KEYBOARD_KEY
-                # Keyboard keys
-                kev = libinput.libinput_event_get_keyboard_event(ev)
-                button = libinput.libinput_event_keyboard_get_key(kev)
-                if libinput.libinput_event_keyboard_get_key_state(kev):
-                    # Button pressed
-                    callback(EventType.KeyPress, button)
-                else:
-                    # Button released
-                    callback(EventType.KeyRelease, button)
-            libinput.libinput_event_destroy(ev)
-
-    except KeyboardInterrupt:
-        # Silent exit
+    @abstractmethod
+    def handle_key(self, keycode: int, pressed: bool):
         pass
-    except:
-        traceback.print_exc()
 
-    # Cleanup
-    libinput.libinput_unref(m_libinput)
-    udev.udev_unref(m_udev)
+    @abstractmethod
+    def handle_mouse_button(self, button: int, pressed: bool):
+        pass
 
+    @abstractmethod
+    def handle_mouse_scroll(self, vertical: bool, distance: float):
+        pass
 
-def libmacro_create_input_device(keys = None):
-    events = {}
-    if keys is not None:
-        events[ecodes.EV_KEY] = keys
-    return uinput.UInput(events, name="libmacro-uinput")
+    @abstractmethod
+    def keys_generated(self) -> List[int]:
+        pass
 
-def libmacro_press_key(device, key):
-    device.write(ecodes.EV_KEY, key, 1)
-    device.syn()
+    def press_key(self, key):
+        self.lm.ui.write(ecodes.EV_KEY, key, 1)
+        self.lm.ui.syn()
 
-def libmacro_release_key(device, key):
-    device.write(ecodes.EV_KEY, key, 0)
-    device.syn()
+    def release_key(self, key):
+        self.lm.ui.write(ecodes.EV_KEY, key, 0)
+        self.lm.ui.syn()
+    
+    def type_key(self, key):
+        self.lm.ui.write(ecodes.EV_KEY, key, 1)
+        self.lm.ui.write(ecodes.EV_KEY, key, 0)
+        self.lm.ui.syn()
+
+class LibMacro:
+
+    # Scripts must have the following functions
+    #   key_handler(keycode: int, pressed: bool)
+    #   mouse_button_handler(button: int, pressed: bool)
+    #   mouse_scroll_handler(vertical: bool, distance: float)
+    #   keys_generated() -> List[int]
+
+    def __init__(self, script: LibMacroScript):
+        # Make sure given script file exists and has required attributes
+        self.script = script
+        self.script.lm = self
+
+    def run(self):
+        # Initialize udev and libinput to monitor input events
+        self.m_udev = udev.udev_new()
+        self.m_libinput_iface  = libinput_interface(CFUNC_OPEN_RESTRICTED(libinput_open_restricted), CFUNC_CLOSE_RESTRICTED(libinput_close_restricted))
+        self.m_libinput = libinput.libinput_udev_create_context(ctypes.byref(self.m_libinput_iface), None, self.m_udev)
+        rc = libinput.libinput_udev_assign_seat(self.m_libinput, "seat0".encode())
+        if rc != 0:
+            raise Exception("Failed to initialize libinput and udev. Try running as root.")
+        
+        # Create uinput object to generate input
+        self.ui = uinput.UInput({
+            ecodes.EV_KEY: self.script.keys_generated()
+        })
+
+        # Event loop
+        # Polls file descriptor until events available (POLLIN)
+        # Then handles all events
+        # Then polls again
+        poll = select.poll()
+        poll.register(libinput.libinput_get_fd(self.m_libinput), select.POLLIN)    
+        try:
+            while True:
+                revents = poll.poll()
+                if len(revents) == 0:
+                    # Nothing returned from polling. Just repeat poll.
+                    continue
+
+                # Got pollin (only thing polling for), handle all events
+                while True:
+                    libinput.libinput_dispatch(self.m_libinput)
+                    ev = libinput.libinput_get_event(self.m_libinput)
+                    if ev is None:
+                        break # Back to polling (no more events to handle)
+
+                    evtype = libinput.libinput_event_get_type(ev)
+                    if evtype == 402:                   # LIBINPUT_EVENT_POINTER_BUTTON
+                        # Mouse buttons
+                        pev = libinput.libinput_event_get_pointer_event(ev)
+                        button = libinput.libinput_event_pointer_get_button(pev)
+                        if libinput.libinput_event_pointer_get_button_state(pev):
+                            self.script.handle_mouse_button(button, True)
+                        else:
+                            self.script.handle_mouse_button(button, False)
+
+                    elif evtype == 404:                 # LIBINPUT_EVENT_POINTER_SCROLL_WHEEL
+                        # Scroll wheel (0 = vertical, 1 = horizontal)
+                        pev = libinput.libinput_event_get_pointer_event(ev)
+                        if libinput.libinput_event_pointer_has_axis(pev, 0):
+                            value = libinput.libinput_event_pointer_get_scroll_value(pev, 0)
+                            self.script.handle_mouse_scroll(True, value)
+                        elif libinput.libinput_event_pointer_has_axis(pev, 1):
+                            value = libinput.libinput_event_pointer_get_scroll_value(pev, 1)
+                            self.script.handle_mouse_scroll(False, value)
+
+                    elif evtype == 300:                 # LIBINPUT_EVENT_KEYBOARD_KEY
+                        # Keyboard keys
+                        kev = libinput.libinput_event_get_keyboard_event(ev)
+                        button = libinput.libinput_event_keyboard_get_key(kev)
+                        if libinput.libinput_event_keyboard_get_key_state(kev):
+                            self.script.handle_key(button, True)
+                        else:
+                            self.script.handle_key(button, False)
+                    libinput.libinput_event_destroy(ev)
+
+        except KeyboardInterrupt:
+            # Silent exit
+            pass
+        except:
+            traceback.print_exc()
+
+        # Cleanup
+        self.ui.close()
+        libinput.libinput_unref(self.m_libinput)
+        udev.udev_unref(self.m_udev)
 
 ################################################################################
