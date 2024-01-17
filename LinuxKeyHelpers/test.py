@@ -15,9 +15,6 @@ class Script(LibMacroScript):
     def handle_mouse_scroll(self, vertical: bool, distance: float):
         print("Scroll {} degrees {}".format(distance, "vertically" if vertical else "horizontally"))
 
-    def keys_generated(self) -> List[int]:
-        return []
-
 if __name__ == "__main__":
     lm = LibMacro(Script())
     lm.run()
