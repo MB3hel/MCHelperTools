@@ -1,3 +1,59 @@
+################################################################################
+#
+# Copyright © 2024 Marcus Behel
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy 
+# of this software and associated documentation files (the “Software”), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+################################################################################
+#
+# Linux version of script (written with AutoHotKey)
+# 
+# Script to simulate the behavior of Minecraft Java Edition 1.15+
+# When ctrl is pressed sprint is enabled until it is pressed again
+# This persists across sneaking, opening UIs, etc
+#
+# Bedrock edition (and Java Edition before 1.15) lack this feature.
+# This script provides a way to get this behavior in these versions of the game
+# by mapping a different key (by default F9) to sprint in the game. This script
+# will then "hold" F9 when you press ctrl, and release it when you press it
+# again, thereby simulating the toggle sprint functionality of Java Edition
+# 1.15+.
+#
+# NOTE: Do not leave this script running while playing Java Edition 1.15+ as it
+# can prevent ctrl from being passed to the game correctly and sprint will not
+# work at all. Either remap F9 in Java Edition 1.15+ (not recommended) or just
+# stop the script before playing Java Edition 1.15+ and use the builtin toggle
+# sprint functionality.
+#
+# This script uses libinput and udev (via python3-evdev module) thus works on 
+# both X11 and wayland
+#
+################################################################################
+#
+# Author: Marcus Behel
+# Date: January 17, 2024
+# Version: 1.2.0
+#
+################################################################################
+
+
+
 
 # Input event codes in ecodes. List at https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h
 from evdev import ecodes
